@@ -35,7 +35,7 @@ public class ProductServiceImpl implements ProductService{
         LOGGER.info("Before publishing a ProductCreatedEvent");
 
         SendResult<String, ProductCreatedEvent> result =
-                kafkaTemplate.send("topic2", productId, productCreatedEvent).get();
+                kafkaTemplate.send("product-created-events-topic", productId, productCreatedEvent).get();
 
 
 
