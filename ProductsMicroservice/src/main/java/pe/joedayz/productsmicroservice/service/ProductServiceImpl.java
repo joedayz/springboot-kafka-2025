@@ -1,5 +1,6 @@
 package pe.joedayz.productsmicroservice.service;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -27,25 +28,26 @@ public class ProductServiceImpl implements ProductService{
         //TODO: Persist product into db before publishing an event
 
         ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent(productId,
-                productRestModel.getTitle(),
-                productRestModel.getPrice(),
+                productRestModel.getTitle(), productRestModel.getPrice(),
                 productRestModel.getQuantity());
-
 
         LOGGER.info("Before publishing a ProductCreatedEvent");
 
+        ProducerRecord<String, ProductCreatedEvent> record = new ProducerRecord<>(
+                "product-created-events-topic",
+                productId,
+                productCreatedEvent);
+        record.headers().add("messageId", UUID.randomUUID().toString().getBytes());
+
+
         SendResult<String, ProductCreatedEvent> result =
-                kafkaTemplate.send("product-created-events-topic", productId, productCreatedEvent).get();
+                kafkaTemplate.send(record).get();
 
+        LOGGER.info("Partition: " + result.getRecordMetadata().partition());
+        LOGGER.info("Topic: " + result.getRecordMetadata().topic());
+        LOGGER.info("Offset: " + result.getRecordMetadata().offset());
 
-
-
-
-        LOGGER.info("Partition: "+ result.getRecordMetadata().partition());
-        LOGGER.info("Topic: "+ result.getRecordMetadata().topic());
-        LOGGER.info("Offset: "+ result.getRecordMetadata().offset());
-
-        LOGGER.info("****** Returning product id");
+        LOGGER.info("***** Returning product id");
 
         return productId;
     }
